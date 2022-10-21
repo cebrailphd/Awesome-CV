@@ -463,24 +463,31 @@
     \headersocialstyle{%
       \newbool{isstart}%
       \setbool{isstart}{true}%
+      \ifthenelse{\isundefined{\@dateofbirth}}%
+      {}%
+      {%
+        % \mbox prevents wrapping of elements%
+        \mbox{\faCalendar*\acvHeaderIconSep\@dateofbirth}%
+        \setbool{isstart}{false}%
+      }%
+      \ifthenelse{\isundefined{\@nationality}}%
+        {}%
+        {%
+          \ifbool{isstart}{\setbool{isstart}{false}}{\acvHeaderSocialSep}%
+          % \mbox prevents wrapping of elements%
+          \mbox{\faIdCard\acvHeaderIconSep\@nationality}%
+        }%
       \ifthenelse{\isundefined{\@mobile}}%
         {}%
         {%
+        \ifbool{isstart}{\setbool{isstart}{false}}{\acvHeaderSocialSep}%
           \href{tel:\@mobile}{\faMobile\acvHeaderIconSep\@mobile}%
-          \setbool{isstart}{false}%
         }%
       \ifthenelse{\isundefined{\@email}}%
         {}%
         {%
           \ifbool{isstart}{\setbool{isstart}{false}}{\acvHeaderSocialSep}%
           \href{mailto:\@email}{\faEnvelope\acvHeaderIconSep\@email}%
-        }%
-      \ifthenelse{\isundefined{\@dateofbirth}}%
-        {}%
-        {%
-          \ifbool{isstart}{\setbool{isstart}{false}}{\acvHeaderSocialSep}%
-          % \mbox prevents wrapping of elements%
-          \mbox{\faBirthdayCake\acvHeaderIconSep\@dateofbirth}%
         }%
       \ifthenelse{\isundefined{\@homepage}}%
         {}%
@@ -646,10 +653,10 @@
   \setlength{\extrarowheight}{0pt}
   \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}} L{\textwidth - 4.5cm} R{4.5cm}}
     \ifempty{#2#3}
-      {\entrypositionstyle{#1} & \entrydatestyle{#4} \\}
-      {\entrytitlestyle{#2} & \entrylocationstyle{#3} \\
-      \entrypositionstyle{#1} & \entrydatestyle{#4} \\}
-    \multicolumn{2}{L{\textwidth}}{\descriptionstyle{#5}}
+      {\entrytitlestyle{#1} & \entrydatestyle{#4}}
+      {\entrytitlestyle{#1} & \entrylocationstyle{#3} \\[-2pt]
+      \entrypositionstyle{#2} & \entrydatestyle{#4}}
+    \ifempty{#5}{}{\\\multicolumn{2}{L{\textwidth}}{{\ifempty{#1}{\vskip-1.2\baselineskip}{}\descriptionstyle{#5}}}}
   \end{tabular*}%
 }
 
@@ -726,6 +733,13 @@
   \vspace{-4.0mm}
 }
 
+% Define a closing of the cv
+% Usage: \makeletterclosing
+\newcommand*{\makecvclosing}{%
+  \vspace{3.4mm}
+  % \letternamestyle{\@firstname\ \@lastname}
+  \signature{\letternamestyle{\@firstname\ \@lastname}}
+}
 
 %-------------------------------------------------------------------------------
 %                Commands for elements of Cover Letter
@@ -770,11 +784,39 @@
 \newcommand*{\makeletterclosing}{%
   \vspace{3.4mm}
   \lettertextstyle{\@letterclosing} \\\\
-  \letternamestyle{\@firstname\ \@lastname}
-  \ifthenelse{\isundefined{\@letterenclosure}}
+ % \letternamestyle{\@firstname\ \@lastname}
+ \signature{\letternamestyle{\@firstname\ \@lastname}} 
+ \ifthenelse{\isundefined{\@letterenclosure}}
     {\\}
     {%
       \\\\\\
       \letterenclosurestyle{\@letterenclname: \@letterenclosure} \\
     }
 }
+
+%-------------------------------------------------------------------------------
+%                Bibliography
+%-------------------------------------------------------------------------------
+%\RequirePackage[style=verbose, maxnames=99, sorting=ydnt]{biblatex}
+\RequirePackage[ % BibLaTeX
+  style=verbose,
+	sorting=none, % Sorts entries by year (descending order), name, title
+	doi=true,
+	isbn=true,
+	url=true,
+	eprint=false,
+	backref = false, % include back references in bibliography
+	maxcitenames=3, % affects only the citations in the document body
+	maxbibnames=99, % affects only the bibliography, pass 99 to print all
+	hyperref=true,
+	block=none,
+	backend=biber % {Options: bibtex, biber}
+	]{biblatex}
+  \renewbibmacro{in:}{}
+% Avoid splitting entries across page break (only for 3 or fewer lines)
+% Tip: http://tex.stackexchange.com/a/51261
+\AtBeginEnvironment{thebibliography}{%
+   \clubpenalty10000
+   \@clubpenalty \clubpenalty
+   \widowpenalty10000
+   \interlinepenalty5000}
